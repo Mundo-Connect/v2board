@@ -1,10 +1,10 @@
 <img src="https://avatars.githubusercontent.com/u/56885001?s=200&v=4" alt="logo" width="130" height="130" align="right"/>
 
-[![](https://img.shields.io/badge/TgChat-@UnOfficialV2board讨论-blue.svg)](https://t.me/unofficialV2board)
+[![](https://img.shields.io/badge/TgChat-@mconnectofficial-blue.svg)](https://t.me/mconnectofficial)
 
 ## 本分支支持的后端
- - [修改版V2bX](https://github.com/wyx2685/V2bX)
- - [v2node](https://github.com/wyx2685/v2node)
+ - [Mundo X后端](https://github.com/Mundo-Connect/M)
+ - [Mundo X网址](https://668993.xyz)
 
 ## 原版迁移步骤
 
@@ -44,7 +44,7 @@
 Thanks to the open source project license provided by [Jetbrains](https://www.jetbrains.com/)
 
 ## Community
-🔔Telegram Group: [@unofficialV2board](https://t.me/unofficialV2board)  
+🔔Telegram Group: [@mconnectofficial](https://t.me/mconnectofficial)  
 
 ## How to Feedback
 Follow the template in the issue to submit your question correctly, and we will have someone follow up with you.
