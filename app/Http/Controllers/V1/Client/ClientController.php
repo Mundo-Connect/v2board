@@ -20,31 +20,33 @@ class ClientController extends Controller
             ?? ($_SERVER['HTTP_USER_AGENT'] ?? '');
         $flag = strtolower($flag);
         $user = $request->user;
-        // account not expired and is not banned.
         $userService = new UserService();
         if ($userService->isAvailable($user)) {
             $serverService = new ServerService();
             $servers = $serverService->getAvailableServers($user);
-            if($flag) {
-                if (!strpos($flag, 'sing')) {
-                    $this->setSubscribeInfoToServers($servers, $user);
+            if ($flag) {
+                if (strpos($flag, 'sing') === false) {
                     foreach (array_reverse(glob(app_path('Protocols') . '/*.php')) as $file) {
                         $file = 'App\\Protocols\\' . basename($file, '.php');
                         $class = new $file($user, $servers);
                         if (strpos($flag, $class->flag) !== false) {
+                            $protocolServers = $this->filterServersForFlag($servers, $class->flag);
+                            $this->setSubscribeInfoToServers($protocolServers, $user);
+                            $class = new $file($user, $protocolServers);
                             return $class->handle();
                         }
                     }
                 }
                 if (strpos($flag, 'sing') !== false) {
+                    $protocolServers = $this->filterServersForFlag($servers, 'sing');
                     $version = null;
                     if (preg_match('/sing-box\s+([0-9.]+)/i', $flag, $matches)) {
                         $version = $matches[1];
                     }
                     if (!is_null($version) && $version >= '1.12.0') {
-                        $class = new Singbox($user, $servers);
+                        $class = new Singbox($user, $protocolServers);
                     } else {
-                        $class = new SingboxOld($user, $servers);
+                        $class = new SingboxOld($user, $protocolServers);
                     }
                     return $class->handle();
                 }
@@ -52,6 +54,36 @@ class ClientController extends Controller
             $class = new General($user, $servers);
             return $class->handle();
         }
+    }
+
+    private function filterServersForFlag(array $servers, string $flag): array
+    {
+        if ($this->shouldExposeMxAndMc1($flag)) {
+            return $servers;
+        }
+
+        return array_values(array_filter($servers, function ($server) {
+            if (($server['type'] ?? null) !== 'v2node') {
+                return true;
+            }
+            if (($server['protocol'] ?? null) === 'mx') {
+                return false;
+            }
+            return ($server['network'] ?? null) !== 'mc1';
+        }));
+    }
+
+    private function shouldExposeMxAndMc1(string $flag): bool
+    {
+        return in_array($flag, [
+            'general',
+            'passwall',
+            'sagernet',
+            'ssrplus',
+            'v2rayn',
+            'v2rayng',
+            'v2raytun',
+        ], true);
     }
 
     private function setSubscribeInfoToServers(&$servers, $user)

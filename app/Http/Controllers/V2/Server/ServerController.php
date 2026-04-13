@@ -17,7 +17,6 @@ class ServerController extends Controller
     {
         $token = $request->input('token');
 
-        // token 为空（业务失败，不抛异常）
         if (empty($token)) {
             response()->json([
                 'status' => 'fail',
@@ -26,7 +25,6 @@ class ServerController extends Controller
             exit;
         }
 
-        // token 错误
         if ($token !== config('v2board.server_token')) {
             response()->json([
                 'status' => 'fail',
@@ -39,7 +37,6 @@ class ServerController extends Controller
         $this->serverService = new ServerService();
         $this->nodeInfo = $this->serverService->getServer($this->nodeId, "v2node");
 
-        // 节点不存在
         if (!$this->nodeInfo) {
             response()->json([
                 'status' => 'fail',
@@ -49,17 +46,20 @@ class ServerController extends Controller
         }
     }
 
-    // 后端获取配置
     public function config(Request $request)
     {
         $response = [
+            'host' => $this->nodeInfo->host,
+            'server_name' => $this->nodeInfo->server_name,
             'listen_ip' => $this->nodeInfo->listen_ip,
             'server_port' => $this->nodeInfo->server_port,
             'network' => $this->nodeInfo->network,
             'network_settings' => $this->nodeInfo->network_settings,
+            'networkSettings' => $this->nodeInfo->network_settings,
             'protocol' => $this->nodeInfo->protocol,
             'tls' => $this->nodeInfo->tls,
             'tls_settings' => $this->nodeInfo->tls_settings,
+            'tlsSettings' => $this->nodeInfo->tls_settings,
             'encryption' => $this->nodeInfo->encryption,
             'encryption_settings' => $this->nodeInfo->encryption_settings,
             'flow' => $this->nodeInfo->flow,
@@ -101,7 +101,6 @@ class ServerController extends Controller
         $rsp = json_encode($response);
         $eTag = sha1($rsp);
 
-        // 不使用 abort(304)，避免异常路径
         if ($request->header('If-None-Match') === $eTag) {
             return response('', 304)->header('ETag', "\"{$eTag}\"");
         }

@@ -266,6 +266,15 @@ class Helper
                 $config['path'] = $networkSettings['serviceName'] ?? null;
                 break;
 
+            case 'mc1':
+                $config['path'] = $networkSettings['path'] ?? '/';
+                $config['host'] = $networkSettings['host'] ?? ($server['host'] ?? '');
+                $config['mode'] = $networkSettings['mode'] ?? 'auto';
+                if (isset($networkSettings['cidrSegments'])) {
+                    $config['cidr'] = is_array($networkSettings['cidrSegments']) ? implode(',', $networkSettings['cidrSegments']) : $networkSettings['cidrSegments'];
+                }
+                break;
+
             case 'kcp':
                 if (isset($networkSettings['seed'])) {
                     $config['path'] = $networkSettings['seed'];
@@ -341,21 +350,86 @@ class Helper
             'type'=> $server['network'],
         ];
 
-        if(isset($server['network']) && in_array($server['network'], ["grpc", "ws"])){
-            if($server['network'] === "grpc" && isset($server['network_settings']['serviceName'])) {
-                $config['serviceName'] = $server['network_settings']['serviceName'];
-            }
-            if($server['network'] === "ws") {
-                if(isset($server['network_settings']['path'])) {
-                    $config['path'] = $server['network_settings']['path'];
-                }
-                if(isset($server['network_settings']['headers']['Host'])) {
-                    $config['host'] = $server['network_settings']['headers']['Host'];
-                }
+        if (isset($server['network']) && isset($server['network_settings'])) {
+            if ($server['network'] === 'mc1') {
+                self::configureMc1Settings($server['network_settings'], $config, $server['host'] ?? '');
+            } elseif (in_array($server['network'], ['grpc', 'ws'], true)) {
+                self::configureNetworkSettings($server, $config);
             }
         }
         $query = http_build_query($config);
         return "trojan://{$password}@" . self::formatHost($server['host']) . ":{$server['port']}?{$query}#". rawurlencode($server['name']) . "\r\n";
+    }
+
+    public static function buildMxUri($password, $server)
+    {
+        $tlsSettings = $server['tls_settings'] ?? [];
+        $config = [
+            'mode' => 'multi',
+            'security' => '',
+            'type' => $server['network'] ?? 'tcp',
+        ];
+
+        switch ((int)($server['tls'] ?? 0)) {
+            case 1:
+                $config['security'] = 'tls';
+                $config['fp'] = $tlsSettings['fingerprint'] ?? 'chrome';
+                $serverName = $server['server_name'] ?? ($tlsSettings['server_name'] ?? '');
+                if ($serverName !== '') {
+                    $config['sni'] = $serverName;
+                }
+                if (($server['allow_insecure'] ?? ($tlsSettings['allow_insecure'] ?? 0))) {
+                    $config['allowInsecure'] = '1';
+                }
+                break;
+            case 2:
+                $config['security'] = 'reality';
+                $config['pbk'] = $tlsSettings['public_key'] ?? '';
+                $config['sid'] = $tlsSettings['short_id'] ?? '';
+                $serverName = $server['server_name'] ?? ($tlsSettings['server_name'] ?? '');
+                if ($serverName !== '') {
+                    $config['sni'] = $serverName;
+                    $config['servername'] = $serverName;
+                }
+                $config['spx'] = '/';
+                $config['fp'] = $tlsSettings['fingerprint'] ?? 'chrome';
+                break;
+        }
+
+        $networkSettings = $server['network_settings'] ?? ($server['networkSettings'] ?? []);
+        switch ($server['network'] ?? 'tcp') {
+            case 'ws':
+                if (isset($networkSettings['path'])) {
+                    $config['path'] = $networkSettings['path'];
+                }
+                if (isset($networkSettings['headers']['Host'])) {
+                    $config['host'] = $networkSettings['headers']['Host'];
+                }
+                break;
+            case 'grpc':
+                if (isset($networkSettings['serviceName'])) {
+                    $config['serviceName'] = $networkSettings['serviceName'];
+                }
+                break;
+            case 'mc1':
+                $config['path'] = $networkSettings['path'] ?? '/';
+                $config['host'] = $networkSettings['host'] ?? $server['host'];
+                $config['mode'] = $networkSettings['mode'] ?? 'auto';
+                if (isset($networkSettings['cidrSegments'])) {
+                    $config['cidr'] = is_array($networkSettings['cidrSegments']) ? implode(',', $networkSettings['cidrSegments']) : $networkSettings['cidrSegments'];
+                }
+                break;
+            case 'xhttp':
+                $config['type'] = 'jatp';
+                $config['endpoint_path'] = $networkSettings['path'] ?? null;
+                $config['endpoint'] = $networkSettings['host'] ?? $server['host'];
+                if (isset($networkSettings['split']) && $networkSettings['split']) {
+                    $config['split'] = $networkSettings['split'];
+                }
+                break;
+        }
+
+        return self::buildUriString('mx', $password, $server, self::encodeURIComponent($server['name']), $config);
     }
 
     public static function buildHysteriaUri($password, $server)
@@ -471,6 +545,9 @@ class Helper
             case 'httpupgrade':
                 self::configureHttpupgradeSettings($settings, $config);
                 break;
+            case 'mc1':
+                self::configureMc1Settings($settings, $config, $server['host'] ?? '');
+                break;
             case 'xhttp':
                 self::configureXhttpSettings($settings, $config);
                 break;
@@ -496,6 +573,16 @@ class Helper
     public static function configureGrpcSettings($settings, &$config)
     {
         $config['serviceName'] = $settings['serviceName'] ?? '';
+    }
+
+    public static function configureMc1Settings($settings, &$config, $defaultHost = '')
+    {
+        $config['path'] = $settings['path'] ?? '/';
+        $config['host'] = $settings['host'] ?? $defaultHost;
+        $config['mode'] = $settings['mode'] ?? 'auto';
+        if (isset($settings['cidrSegments'])) {
+            $config['cidr'] = is_array($settings['cidrSegments']) ? implode(',', $settings['cidrSegments']) : $settings['cidrSegments'];
+        }
     }
 
     public static function configureKcpSettings($settings, &$config)
