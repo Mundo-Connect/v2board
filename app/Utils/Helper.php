@@ -327,7 +327,7 @@ class Helper
         }
         if (!empty($tlsSettings['ech'])) {
             if ($tlsSettings['ech'] === 'cloudflare') {
-                $config['ech'] = 'cloudflare-ech.com+https://1.1.1.1/dns-query';
+                $config['ech'] = 'cloudflare-ech.com+https://doh.pub/dns-query';
             } elseif ($tlsSettings['ech'] === 'custom' && !empty($tlsSettings['ech_config'])) {
                 $config['ech'] = is_array($tlsSettings['ech_config']) ? $tlsSettings['ech_config'][0] : $tlsSettings['ech_config'];
             }
@@ -366,7 +366,7 @@ class Helper
         }
         if (!empty($tlsSettings['ech'])) {
             if ($tlsSettings['ech'] === 'cloudflare') {
-                $config['ech'] = 'cloudflare-ech.com+https://1.1.1.1/dns-query';
+                $config['ech'] = 'cloudflare-ech.com+https://doh.pub/dns-query';
             } elseif ($tlsSettings['ech'] === 'custom' && !empty($tlsSettings['ech_config'])) {
                 $config['ech'] = is_array($tlsSettings['ech_config']) ? $tlsSettings['ech_config'][0] : $tlsSettings['ech_config'];
             }
