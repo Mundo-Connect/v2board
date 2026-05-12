@@ -25,7 +25,7 @@ class V2nodeController extends Controller
             'tls' => 'required|in:0,1,2',
             'tls_settings' => 'nullable|array',
             'flow' => 'nullable|in:xtls-rprx-vision',
-            'network' => 'required|in:tcp,ws,grpc,http,httpupgrade,xhttp,mc1',
+            'network' => 'required|in:tcp,ws,grpc,http,httpupgrade,xhttp,mc1,mundordp',
             'network_settings' => 'nullable|array',
             'encryption' => 'nullable',
             'encryption_settings' => 'nullable|array',
@@ -84,8 +84,10 @@ class V2nodeController extends Controller
         }
         if (isset($params['network_settings'])) {
             $ns = $params['network_settings'];
-            if (isset($ns['acceptProxyProtocol'])) {
-                $ns['acceptProxyProtocol'] = filter_var($ns['acceptProxyProtocol'], FILTER_VALIDATE_BOOLEAN);
+            foreach (['acceptProxyProtocol', 'useTLSCertificate'] as $field) {
+                if (isset($ns[$field])) {
+                    $ns[$field] = filter_var($ns[$field], FILTER_VALIDATE_BOOLEAN);
+                }
             }
             $params['network_settings'] = $ns;
         }

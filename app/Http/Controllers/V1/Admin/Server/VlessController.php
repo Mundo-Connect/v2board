@@ -52,6 +52,15 @@ class VlessController extends Controller
         if ($params['network'] != 'tcp') {
             $params['flow'] = null;
         }
+        if (isset($params['network_settings'])) {
+            $ns = $params['network_settings'];
+            foreach (['acceptProxyProtocol', 'useTLSCertificate'] as $field) {
+                if (isset($ns[$field])) {
+                    $ns[$field] = filter_var($ns[$field], FILTER_VALIDATE_BOOLEAN);
+                }
+            }
+            $params['network_settings'] = $ns;
+        }
         if ($params['network'] == 'xhttp' && isset($params['network_settings'])) {
             $ns = $params['network_settings'];
             if (isset($ns['extra']) && is_array($ns['extra'])) {

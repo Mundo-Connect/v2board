@@ -90,6 +90,14 @@ class AdminRoute
                 $router->post('copy', 'V1\\Admin\\Server\\AnyTLSController@copy');
             });
             $router->group([
+                'prefix' => 'server/mx'
+            ], function ($router) {
+                $router->post('save', 'V1\\Admin\\Server\\MxController@save');
+                $router->post('drop', 'V1\\Admin\\Server\\MxController@drop');
+                $router->post('update', 'V1\\Admin\\Server\\MxController@update');
+                $router->post('copy', 'V1\\Admin\\Server\\MxController@copy');
+            });
+            $router->group([
                 'prefix' => 'server/v2node'
             ], function ($router) {
                 $router->post('save', 'V1\\Admin\\Server\\V2nodeController@save');

@@ -13,6 +13,7 @@ use App\Models\ServerVmess;
 use App\Models\ServerTrojan;
 use App\Models\ServerTuic;
 use App\Models\ServerAnytls;
+use App\Models\ServerMx;
 use App\Utils\CacheKey;
 use App\Utils\Helper;
 use Illuminate\Support\Facades\Cache;
@@ -190,6 +191,36 @@ class ServerService
         return $servers;
     }
 
+    public function getAvailableMx(User $user)
+    {
+        $servers = [];
+        $model = ServerMx::orderBy('sort', 'ASC');
+        $mx = $model->get()->keyBy('id');
+        foreach ($mx as $key => $v) {
+            if (!$v['show']) continue;
+            $mx[$key]['type'] = 'mx';
+            $mx[$key]['last_check_at'] = Cache::get(CacheKey::get('SERVER_MX_LAST_CHECK_AT', $v['id']));
+            if (!in_array($user->group_id, $v['group_id'])) continue;
+            if (strpos($v['port'], '-') !== false) {
+                $mx[$key]['port'] = Helper::randomPort($v['port']);
+            }
+            if (isset($mx[$v['parent_id']])) {
+                $mx[$key]['last_check_at'] = Cache::get(CacheKey::get('SERVER_MX_LAST_CHECK_AT', $v['parent_id']));
+                $mx[$key]['created_at'] = $mx[$v['parent_id']]['created_at'];
+            }
+            if (isset($mx[$key]['tls_settings'])) {
+                $mx[$key]['tls_settings'] = array_diff_key(
+                    $mx[$key]['tls_settings'],
+                    array_flip(array_filter(['private_key', 'ech_key'], function($k) use ($mx, $key) {
+                        return isset($mx[$key]['tls_settings'][$k]);
+                    }))
+                );
+            }
+            $servers[] = $mx[$key]->toArray();
+        }
+        return $servers;
+    }
+
     public function getAvailableV2node(User $user)
     {
         $servers = [];
@@ -232,6 +263,7 @@ class ServerService
             $this->getAvailableHysteria($user),
             $this->getAvailableVless($user),
             $this->getAvailableAnyTLS($user),
+            $this->getAvailableMx($user),
             $this->getAvailableV2node($user)
         );
         $tmp = array_column($servers, 'sort');
@@ -378,6 +410,17 @@ class ServerService
         return $servers;
     }
 
+    public function getAllMx()
+    {
+        $servers = ServerMx::orderBy('sort', 'ASC')
+            ->get()
+            ->toArray();
+        foreach ($servers as $k => $v) {
+            $servers[$k]['type'] = 'mx';
+        }
+        return $servers;
+    }
+
     public function getAllV2node()
     {
         $servers = ServerV2node::orderBy('sort', 'ASC')
@@ -431,6 +474,7 @@ class ServerService
             $this->getAllHysteria(),
             $this->getAllVLess(),
             $this->getAllAnyTLS(),
+            $this->getAllMx(),
             $this->getAllV2node()
         );
         $this->mergeData($servers);
@@ -473,6 +517,8 @@ class ServerService
                 return ServerVless::find($serverId);
             case 'anytls':
                 return ServerAnytls::find($serverId);
+            case 'mx':
+                return ServerMx::find($serverId);
             default:
                 return false;
         }

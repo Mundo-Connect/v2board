@@ -293,6 +293,10 @@ class Helper
                 $config['mode'] = $networkSettings['mode'] ?? 'auto';
                 $config['extra'] = isset($networkSettings['extra']) ? json_encode($networkSettings['extra'], JSON_UNESCAPED_SLASHES) : null;
                 break;
+
+            case 'mundordp':
+                self::configureMundoRdpSettings($networkSettings, $config);
+                break;
         }
 
         return "vmess://" . base64_encode(json_encode($config)) . "\r\n";
@@ -360,7 +364,7 @@ class Helper
         if (isset($server['network']) && isset($server['network_settings'])) {
             if ($server['network'] === 'mc1') {
                 self::configureMc1Settings($server['network_settings'], $config, $server['host'] ?? '');
-            } elseif (in_array($server['network'], ['grpc', 'ws'], true)) {
+            } elseif (in_array($server['network'], ['grpc', 'ws', 'mundordp'], true)) {
                 self::configureNetworkSettings($server, $config);
             }
         }
@@ -440,6 +444,9 @@ class Helper
                 if (isset($networkSettings['split']) && $networkSettings['split']) {
                     $config['split'] = $networkSettings['split'];
                 }
+                break;
+            case 'mundordp':
+                self::configureMundoRdpSettings($networkSettings, $config);
                 break;
         }
 
@@ -610,6 +617,9 @@ class Helper
             case 'xhttp':
                 self::configureXhttpSettings($settings, $config);
                 break;
+            case 'mundordp':
+                self::configureMundoRdpSettings($settings, $config);
+                break;
         }
     }
 
@@ -664,5 +674,24 @@ class Helper
         $config['host'] = $settings['host'] ?? '';
         $config['mode'] = $settings['mode'] ?? 'auto';
         $config['extra'] = isset($settings['extra']) ? json_encode($settings['extra'], JSON_UNESCAPED_SLASHES) : null;
+    }
+
+    public static function configureMundoRdpSettings($settings, &$config)
+    {
+        $config['username'] = isset($settings['username']) && trim((string)$settings['username']) !== ''
+            ? $settings['username']
+            : 'MundoUser';
+
+        foreach (['certificateFingerprint', 'fakeTitle', 'fakeMessage'] as $field) {
+            if (isset($settings[$field]) && trim((string)$settings[$field]) !== '') {
+                $config[$field] = $settings[$field];
+            }
+        }
+
+        foreach (['acceptProxyProtocol', 'useTLSCertificate'] as $field) {
+            if (array_key_exists($field, $settings)) {
+                $config[$field] = filter_var($settings[$field], FILTER_VALIDATE_BOOLEAN);
+            }
+        }
     }
 }

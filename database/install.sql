@@ -421,6 +421,32 @@ CREATE TABLE `v2_server_anytls` (
                                       PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS `v2_server_mx`;
+CREATE TABLE `v2_server_mx` (
+                                `id` int(11) NOT NULL AUTO_INCREMENT,
+                                `group_id` varchar(255) NOT NULL,
+                                `route_id` varchar(255) DEFAULT NULL,
+                                `name` varchar(255) NOT NULL,
+                                `parent_id` int(11) DEFAULT NULL,
+                                `host` varchar(255) NOT NULL,
+                                `listen_ip` varchar(255) NOT NULL DEFAULT '0.0.0.0',
+                                `port` varchar(11) NOT NULL,
+                                `server_port` int(11) NOT NULL,
+                                `tls` tinyint(1) NOT NULL DEFAULT '1',
+                                `tls_settings` text,
+                                `server_name` varchar(255) DEFAULT NULL,
+                                `allow_insecure` tinyint(1) NOT NULL DEFAULT '0',
+                                `network` varchar(11) NOT NULL DEFAULT 'tcp',
+                                `network_settings` text,
+                                `tags` varchar(255) DEFAULT NULL,
+                                `rate` varchar(11) NOT NULL,
+                                `show` tinyint(1) NOT NULL DEFAULT '0',
+                                `sort` int(11) DEFAULT NULL,
+                                `created_at` int(11) NOT NULL,
+                                `updated_at` int(11) NOT NULL,
+                                PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Mundo X伺服器表';
+
 DROP TABLE IF EXISTS `v2_server_v2node`;
 CREATE TABLE `v2_server_v2node` (
                                     `id` int(11) NOT NULL AUTO_INCREMENT,

@@ -63,6 +63,12 @@ class ClientController extends Controller
         }
 
         return array_values(array_filter($servers, function ($server) {
+            if (($server['type'] ?? null) === 'mx') {
+                return false;
+            }
+            if (in_array(($server['network'] ?? null), ['mc1', 'mundordp'], true)) {
+                return false;
+            }
             if (($server['type'] ?? null) !== 'v2node') {
                 return true;
             }

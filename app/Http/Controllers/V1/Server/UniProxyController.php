@@ -277,6 +277,22 @@ class UniProxyController extends Controller
                     'padding_scheme' => $this->nodeInfo->padding_scheme
                 ];
                 break;
+            case 'mx':
+                $response = [
+                    'host' => $this->nodeInfo->host,
+                    'listen_ip' => $this->nodeInfo->listen_ip,
+                    'server_port' => $this->nodeInfo->server_port,
+                    'network' => $this->nodeInfo->network,
+                    'networkSettings' => $this->nodeInfo->network_settings,
+                    'network_settings' => $this->nodeInfo->network_settings,
+                    'protocol' => 'mx',
+                    'tls' => $this->nodeInfo->tls,
+                    'tls_settings' => $this->nodeInfo->tls_settings,
+                    'tlsSettings' => $this->nodeInfo->tls_settings,
+                    'server_name' => $this->nodeInfo->server_name ?: ($this->nodeInfo->tls_settings['server_name'] ?? null),
+                    'allow_insecure' => $this->nodeInfo->allow_insecure,
+                ];
+                break;
         }
         $response['base_config'] = [
             'push_interval' => (int)config('v2board.server_push_interval', 60),
