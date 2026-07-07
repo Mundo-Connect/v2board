@@ -106117,17 +106117,42 @@
                 }
             }
             save() {
-                e = JSON.parse(JSON.stringify(this.state.server));
-                e.network_settings = e.network_settings ? ("string" === typeof e.network_settings ? JSON.parse(e.network_settings) : e.network_settings) : null;
-                delete e.install_command;
-                this.props.mxOnly && (e.protocol = "mx");
-                this.props.dispatch({
-                    type: this.props.mxOnly || e.type === "mx" ? "serverMx/save" : "serverV2node/save",
-                    params: e,
-                    callback: ()=>{
-                        this.onShow()
+                try {
+                    var e = JSON.parse(JSON.stringify(this.state.server));
+                    e.network_settings = e.network_settings ? ("string" === typeof e.network_settings ? JSON.parse(e.network_settings) : e.network_settings) : null;
+                    delete e.install_command;
+                    var t = this.props.mxOnly || e.type === "mx" || e.protocol === "mx";
+                    if (t) {
+                        e.protocol = "mx";
+                        e.tls = null == e.tls ? 1 : e.tls;
+                        e.network = e.network || "tcp";
+                        e.rate = null == e.rate || "" === e.rate ? 1 : e.rate;
+                        e.group_id = e.group_id || [];
+                        delete e.type;
+                        delete e.disable_sni;
+                        delete e.zero_rtt_handshake;
+                        delete e.udp_relay_mode;
+                        delete e.congestion_control;
+                        delete e.cipher;
+                        delete e.up_mbps;
+                        delete e.down_mbps;
+                        delete e.obfs;
+                        delete e.obfs_password;
+                        delete e.padding_scheme;
+                        delete e.flow;
+                        delete e.encryption;
+                        delete e.encryption_settings
                     }
-                })
+                    this.props.dispatch({
+                        type: t ? "serverMx/save" : "serverV2node/save",
+                        params: e,
+                        callback: ()=>{
+                            this.onShow()
+                        }
+                    })
+                } catch (e) {
+                    window.console && console.error && console.error(e)
+                }
             }
             showChildDrawer(e, t) {
                 this.setState({
@@ -107053,10 +107078,11 @@
                         text: e.name,
                         value: e.id
                     })),
-                    onFilter: (e,t)=>-1 !== t.group_id.indexOf("".concat(e)),
+                    onFilter: (e,t)=>-1 !== (Array.isArray(t.group_id) ? t.group_id : []).indexOf("".concat(e)),
                     render: (e,t)=>{
-                        var n = [];
-                        return t.group_id.map(e=>{
+                        var n = []
+                          , r = Array.isArray(t.group_id) ? t.group_id : [];
+                        return r.map(e=>{
                             var t = R.find(t=>t.id === parseInt(e));
                             t && n.push(y.a.createElement(g["a"], null, t.name))
                         }
