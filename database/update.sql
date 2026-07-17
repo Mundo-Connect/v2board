@@ -881,3 +881,5 @@ CREATE TABLE IF NOT EXISTS `v2_server_mx` (
                                 `updated_at` int(11) NOT NULL,
                                 PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Mundo X伺服器表';
+ALTER TABLE `v2_server_v2node`
+ADD `trusted_x_forwarded_for` varchar(255) COLLATE 'utf8mb4_general_ci' NULL COMMENT '信任的x-forwarded-for头部' AFTER `network_settings`;
