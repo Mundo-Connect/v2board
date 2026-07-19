@@ -106960,7 +106960,7 @@
                         type: "edit"
                     }), " \u7f16\u8f91")), "mx" === e.type && y.a.createElement(mV2node, {
                         key: e.id,
-                        record: I()({
+                        record: Object.assign({
                             protocol: "mx"
                         }, e),
                         mxOnly: !0
@@ -107303,7 +107303,7 @@
                     type: "form"
                 }), " \u7f16\u8f91")), "mx" === (null === (r = this.record) || void 0 === r ? void 0 : r.type) && y.a.createElement(mV2node, {
                     key: Math.random(),
-                    record: I()({
+                    record: Object.assign({
                         protocol: "mx"
                     }, this.record),
                     mxOnly: !0
