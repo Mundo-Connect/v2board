@@ -242,6 +242,7 @@ class Helper
             $tlsSettings = $server['tls_settings'] ?? $server['tlsSettings'] ?? [];
             $config['allowInsecure'] = (int)($tlsSettings['allow_insecure'] ?? $tlsSettings['allowInsecure'] ?? 0);
             $config['sni'] = $tlsSettings['server_name'] ?? $tlsSettings['serverName'] ?? '';
+            $config['pcs'] = $tlsSettings['pinned_peer_cert_sha256'] ?? '';
         }
         
         $network = (string)$server['network'];
@@ -319,6 +320,7 @@ class Helper
             "flow" => $server['flow'],
             "fp" => $tlsSettings['fingerprint'] ?? 'chrome',
             "insecure" => $tlsSettings['allow_insecure'] ?? 0,
+            "pcs" => $tlsSettings['pinned_peer_cert_sha256'] ?? '',
         ];
 
         if ($server['tls']) {
@@ -358,6 +360,7 @@ class Helper
             'allowInsecure' => $server['allow_insecure'] ?? ($tlsSettings['allow_insecure'] ?? 0),
             'peer' => $server['server_name'] ?? ($tlsSettings['server_name'] ?? ''),
             'sni' => $server['server_name'] ?? ($tlsSettings['server_name'] ?? ''),
+            'pcs' => $tlsSettings['pinned_peer_cert_sha256'] ?? '',
             'type'=> $server['network'],
         ];
 
@@ -487,7 +490,8 @@ class Helper
         $tlsSettings = $server['tls_settings'] ?? [];
         $insecure = $tlsSettings['allow_insecure'] ?? 0;
         $sni = $tlsSettings['server_name'] ?? '';
-        $uri = "hysteria2://{$password}@{$remote}:{$firstPort}/?insecure={$insecure}&sni={$sni}";
+        $pcs = $tlsSettings['pinned_peer_cert_sha256'] ?? '';
+        $uri = "hysteria2://{$password}@{$remote}:{$firstPort}/?insecure={$insecure}&sni={$sni}&pcs={$pcs}";
 
         if (isset($server['obfs']) && isset($server['obfs_password'])) {
             $obfs_password = rawurlencode($server['obfs_password']);
@@ -509,6 +513,7 @@ class Helper
             'allow_insecure' => $server['insecure'] ?? ($tlsSettings['allow_insecure'] ?? 0),
             'disable_sni' => $server['disable_sni'],
             'udp_relay_mode' => $server['udp_relay_mode'],
+            'pcs' => $tlsSettings['pinned_peer_cert_sha256'] ?? '',
         ];
 
         $remote = self::formatHost($server['host']);
@@ -526,6 +531,7 @@ class Helper
             'type' => $server['network'] ?? 'tcp',
             'insecure' => $server['insecure'] ?? ($tlsSettings['allow_insecure'] ?? 0),
             'fp' => $tlsSettings['fingerprint'] ?? 'chrome',
+            'pcs' => $tlsSettings['pinned_peer_cert_sha256'] ?? '',
         ];
         if (isset($server['server_name']) || isset($tlsSettings['server_name'])) {
             $config['sni'] = $server['server_name'] ?? ($tlsSettings['server_name'] ?? '');
