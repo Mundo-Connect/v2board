@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\ServerService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class ManageController extends Controller
 {
@@ -20,7 +21,7 @@ class ManageController extends Controller
     public function sort(Request $request)
     {
         ini_set('post_max_size', '5m');
-        $params = $request->only(
+        $types = [
             'shadowsocks',
             'vmess',
             'vless',
@@ -28,31 +29,34 @@ class ManageController extends Controller
             'tuic',
             'hysteria',
             'anytls',
+            'mx',
             'v2node'
-        ) ?? [];
+        ];
+        $params = $request->only($types);
         if (empty($params)) {
-            $params = [
-                'shadowsocks' => $_POST['shadowsocks'] ?? null,
-                'vmess'       => $_POST['vmess'] ?? null,
-                'vless'       => $_POST['vless'] ?? null,
-                'trojan'      => $_POST['trojan'] ?? null,
-                'tuic'        => $_POST['tuic'] ?? null,
-                'hysteria'    => $_POST['hysteria'] ?? null,
-                'anytls'      => $_POST['anytls'] ?? null,
-                'v2node'      => $_POST['v2node'] ?? null,
-            ];
+            $params = array_intersect_key($_POST, array_flip($types));
         }
-        DB::beginTransaction();
-        foreach ($params as $k => $v) {
-            $model = 'App\\Models\\Server' . ucfirst($k);
-            foreach($v as $id => $sort) {
-                if (!$model::find($id)->update(['sort' => $sort])) {
-                    DB::rollBack();
-                    abort(500, '保存失败');
+        Validator::make($params, [
+            '*' => 'array',
+            '*.*' => 'required|integer|min:0'
+        ])->validate();
+        DB::transaction(function () use ($params) {
+            foreach ($params as $k => $v) {
+                $model = 'App\\Models\\Server' . ucfirst($k);
+                foreach ($v as $id => $sort) {
+                    if (!ctype_digit((string) $id) || (int) $id < 1) {
+                        abort(422, '节点ID无效');
+                    }
+                    $server = $model::find($id);
+                    if (!$server) {
+                        abort(422, '节点不存在，请刷新后重试');
+                    }
+                    if (!$server->update(['sort' => $sort])) {
+                        abort(500, '保存失败');
+                    }
                 }
             }
-        }
-        DB::commit();
+        });
         return response([
             'data' => true
         ]);

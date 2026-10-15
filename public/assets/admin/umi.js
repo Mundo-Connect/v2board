@@ -5470,12 +5470,11 @@
                                     return e.next = 2,
                                     i(e=>e.serverManage);
                                 case 2:
-                                    return t = e.sent,
-                                    s = t.servers,
-                                    t.sortHistory,
-                                    n < r ? (s.splice(r + 1, 0, s[n]),
-                                    s.splice(n, 1)) : (s.splice(r, 0, s[n]),
-                                    s.splice(n + 1, 1)),
+                                    t = e.sent;
+                                    if (!t.sortMode || !Number.isInteger(n) || !Number.isInteger(r) || n < 0 || r < 0 || n >= t.servers.length || r >= t.servers.length || n === r)
+                                        return e.abrupt("return");
+                                    return s = t.servers.slice(),
+                                    s.splice(r, 0, s.splice(n, 1)[0]),
                                     e.next = 8,
                                     o({
                                         type: "setState",
@@ -107231,18 +107230,22 @@
                         description: "".concat(e.host, ":").concat(e.port)
                     }))
                 }) : y.a.createElement(x["a"], {
-                    onDragEnd: (e,t)=>{
-                        console.log(e, t),
+                    onDragEnd: (fromIndex,toIndex)=>{
+                        var visibleServers = N ? E.filter(server=>-1 !== JSON.stringify(server).indexOf(N)) : E;
+                        if (!A || !visibleServers[fromIndex] || !visibleServers[toIndex])
+                            return;
                         F.props.dispatch({
                             type: "serverManage/sort",
-                            fromIndex: e,
-                            toIndex: t
+                            fromIndex: E.indexOf(visibleServers[fromIndex]),
+                            toIndex: E.indexOf(visibleServers[toIndex])
                         })
                     }
                     ,
-                    nodeSelector: "tr",
-                    handleSelector: "i"
+                    nodeSelector: "tbody > tr",
+                    handleSelector: ".v2board-node-sort-handle"
                 }, y.a.createElement(j["a"], {
+                    key: A ? "sort" : "list",
+                    rowKey: server=>server.type + "-" + server.id,
                     onContextMenu: e=>{
                         this.record = e,
                         this.forceUpdate()
@@ -107260,6 +107263,7 @@
                         render: (e,t,n)=>{
                             return y.a.createElement("div", null, y.a.createElement(m["a"], {
                                 type: "menu",
+                                className: "v2board-node-sort-handle",
                                 style: {
                                     cursor: "move"
                                 },
