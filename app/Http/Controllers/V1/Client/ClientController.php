@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Protocols\General;
 use App\Protocols\Singbox\Singbox;
 use App\Protocols\Singbox\SingboxOld;
-use App\Protocols\ClashMeta;
 use App\Services\ServerService;
 use App\Services\UserService;
 use App\Utils\Helper;
@@ -16,43 +15,34 @@ class ClientController extends Controller
 {
     public function subscribe(Request $request)
     {
-        $flag = $request->input('flag')
-            ?? ($_SERVER['HTTP_USER_AGENT'] ?? '');
-        $flag = strtolower($flag);
+        $flag = $request->input('flag');
+        $flag = strtolower(is_string($flag) ? $flag : ($request->userAgent() ?? ''));
         $user = $request->user;
         $userService = new UserService();
         if ($userService->isAvailable($user)) {
             $serverService = new ServerService();
             $servers = $serverService->getAvailableServers($user);
-            if ($flag) {
-                if (strpos($flag, 'sing') === false) {
-                    foreach (array_reverse(glob(app_path('Protocols') . '/*.php')) as $file) {
-                        $file = 'App\\Protocols\\' . basename($file, '.php');
-                        $class = new $file($user, $servers);
-                        if (strpos($flag, $class->flag) !== false) {
-                            $protocolServers = $this->filterServersForFlag($servers, $class->flag);
-                            $this->setSubscribeInfoToServers($protocolServers, $user);
-                            $class = new $file($user, $protocolServers);
-                            return $class->handle();
-                        }
+            if (strpos($flag, 'sing') !== false) {
+                $isModern = preg_match('/sing-box[\/\s]+v?(\d+\.\d+(?:\.\d+)?)/', $flag, $matches)
+                    && version_compare($matches[1], '1.12.0', '>=');
+                $protocol = $isModern ? Singbox::class : SingboxOld::class;
+                $servers = $this->filterServersForFlag($servers, 'sing');
+                return (new $protocol($user, $servers))->handle();
+            }
+
+            if ($flag !== '') {
+                foreach (array_reverse(glob(app_path('Protocols') . '/*.php')) as $file) {
+                    $protocol = 'App\\Protocols\\' . basename($file, '.php');
+                    $protocolFlag = get_class_vars($protocol)['flag'];
+                    if (strpos($flag, $protocolFlag) !== false) {
+                        $servers = $this->filterServersForFlag($servers, $protocolFlag);
+                        $this->setSubscribeInfoToServers($servers, $user);
+                        return (new $protocol($user, $servers))->handle();
                     }
-                }
-                if (strpos($flag, 'sing') !== false) {
-                    $protocolServers = $this->filterServersForFlag($servers, 'sing');
-                    $version = null;
-                    if (preg_match('/sing-box\s+([0-9.]+)/i', $flag, $matches)) {
-                        $version = $matches[1];
-                    }
-                    if (!is_null($version) && $version >= '1.12.0') {
-                        $class = new Singbox($user, $protocolServers);
-                    } else {
-                        $class = new SingboxOld($user, $protocolServers);
-                    }
-                    return $class->handle();
                 }
             }
-            $class = new General($user, $servers);
-            return $class->handle();
+
+            return (new General($user, $servers))->handle();
         }
     }
 
